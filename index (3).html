@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Processing Speed Test</title>
+  <script src="https://unpkg.com/jspsych@7.3.4/dist/index.browser.min.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3/dist/index.browser.min.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-instructions@1.1.4/dist/index.browser.min.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3/dist/index.browser.min.js"></script>
+  <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" />
+  <style>
+    body { background: #fff; font-family: sans-serif; }
+
+    /* ── header ── */
+    .pst-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 30px; border-bottom: 1px solid #eee;
+    }
+    .pst-logo  { font-size: 22px; font-weight: bold; color: #0072ce; }
+    .pst-title { font-size: 26px; font-weight: bold; color: #333; }
+
+    /* ── SDMT key & row tables ── */
+    .sdmt-key-table, .sdmt-row-table {
+      border-collapse: collapse; margin: 10px auto;
+    }
+    .sdmt-key-table td, .sdmt-row-table td {
+      border: 2px solid #000; width: 65px; height: 65px;
+      text-align: center; vertical-align: middle;
+      font-size: 30px; font-family: sans-serif;
+    }
+    .sdmt-row-table td.current  { background: #fff4cc; }
+    .sdmt-row-table td.answered { color: #000; }
+
+    /* ── keypad ── */
+    .keypad { display: flex; justify-content: center; gap: 12px; margin-top: 24px; }
+    .keypad button {
+      background: #1b8a9e; color: #fff; border: none;
+      font-size: 28px; font-weight: bold;
+      width: 88px; height: 88px; border-radius: 8px; cursor: pointer;
+    }
+    .keypad button:hover   { background: #156d7d; }
+    .keypad button:active  { background: #0f5260; }
+
+    /* ── timer ── */
+    .timer-display {
+      text-align: center; font-size: 20px; font-weight: bold;
+      color: #444; margin-top: 10px;
+    }
+
+    /* ── demographics forms ── */
+    .demo-wrap {
+      max-width: 520px; margin: 40px auto; padding: 0 20px;
+    }
+    .demo-wrap h2 { color: #333; margin-bottom: 6px; }
+    .demo-wrap p  { color: #555; margin-bottom: 24px; }
+    .demo-wrap label {
+      display: block; font-weight: bold; margin-bottom: 6px; color: #333;
+    }
+    .demo-wrap input[type=text],
+    .demo-wrap select {
+      width: 100%; padding: 10px 12px; font-size: 16px;
+      border: 2px solid #ccc; border-radius: 6px;
+      box-sizing: border-box; margin-bottom: 24px;
+    }
+    .demo-wrap input[type=text]:focus,
+    .demo-wrap select:focus {
+      border-color: #1b8a9e; outline: none;
+    }
+    .mc-group { margin-bottom: 24px; }
+    .mc-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border: 2px solid #ccc; border-radius: 6px;
+      margin-bottom: 8px; cursor: pointer; font-size: 16px;
+    }
+    .mc-option:hover    { border-color: #1b8a9e; background: #f0fafc; }
+    .mc-option.selected { border-color: #1b8a9e; background: #e0f4f8; font-weight: bold; }
+    .mc-option input    { width: 18px; height: 18px; cursor: pointer; }
+
+    /* scroll pickers (DOB + Race) */
+    .scroll-pickers { display: flex; gap: 12px; margin-bottom: 24px; }
+    .scroll-pickers select { flex: 1; margin-bottom: 0; }
+
+    /* ── next button ── */
+    .next-btn {
+      display: block; width: 100%; padding: 14px;
+      background: #1b8a9e; color: #fff; border: none;
+      border-radius: 8px; font-size: 18px; font-weight: bold;
+      cursor: pointer; margin-top: 8px;
+    }
+    .next-btn:hover { background: #156d7d; }
+    .next-btn:disabled { background: #a0c8d0; cursor: default; }
+
+    /* ── results screen ── */
+    .results-wrap {
+      max-width: 500px; margin: 50px auto; text-align: center; padding: 0 20px;
+    }
+    .results-wrap h2 { font-size: 28px; color: #333; margin-bottom: 8px; }
+    .results-wrap .subtitle { color: #777; margin-bottom: 36px; }
+    .stat-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-bottom: 36px;
+    }
+    .stat-card {
+      border: 2px solid #e0e0e0; border-radius: 10px;
+      padding: 20px 10px;
+    }
+    .stat-card .stat-value {
+      font-size: 36px; font-weight: bold; color: #1b8a9e;
+    }
+    .stat-card .stat-label {
+      font-size: 13px; color: #888; margin-top: 4px;
+    }
+    .results-wrap .done-note {
+      font-size: 14px; color: #999; margin-top: 24px;
+    }
+
+    /* ── get-started screen ── */
+    .welcome-wrap {
+      max-width: 520px; margin: 80px auto; text-align: center; padding: 0 24px;
+    }
+    .welcome-wrap h1 { font-size: 32px; color: #333; margin-bottom: 12px; }
+    .welcome-wrap p  { font-size: 17px; color: #555; line-height: 1.6; margin-bottom: 36px; }
+
+    /* error hint */
+    .field-error { color: #c0392b; font-size: 13px; margin-top: -18px; margin-bottom: 12px; display: none; }
+  </style>
+</head>
+<body></body>
+<script>
+
+/* =============================================================
+   SYMBOLS  (index 0-8  →  digits 1-9)
+============================================================= */
+const SYMBOLS = ["⧄","Ɵ","♯","⊐","⊟","⋈","∟","U̇","◇"];
+
+function generateSequence(length) {
+  const seq = []; let last = -1;
+  for (let i = 0; i < length; i++) {
+    let next;
+    do { next = Math.floor(Math.random() * 9); } while (next === last);
+    seq.push(next); last = next;
+  }
+  return seq;
+}
+
+/* =============================================================
+   SDMT PLUGIN  (jsPsych 7 class style)
+============================================================= */
+class SdmtPlugin {
+  static info = {
+    name: "sdmt-trial",
+    parameters: {
+      duration_ms:   { type: "INT",    default: null  },
+      max_items:     { type: "INT",    default: null  },
+      visible_items: { type: "INT",    default: 9     },
+      show_timer:    { type: "BOOL",   default: true  },
+      phase_label:   { type: "STRING", default: "test"}
+    }
+  };
+
+  constructor(jsPsych) { this.jsPsych = jsPsych; }
+
+  trial(display_element, trial) {
+    const jsPsych   = this.jsPsych;
+    const sequence  = generateSequence(trial.max_items || 300);
+    let currentIndex = 0, correctCount = 0, totalAnswered = 0;
+    const responses = [];
+    let trialStart  = performance.now(), itemStart = performance.now();
+    let timerIv = null, endTO = null, ended = false;
+
+    const keyHTML = () => {
+      let sr = "<tr>", nr = "<tr>";
+      SYMBOLS.forEach((s,i) => { sr += `<td>${s}</td>`; nr += `<td>${i+1}</td>`; });
+      return `<table class="sdmt-key-table">${sr}</tr>${nr}</tr></table>`;
+    };
+
+    const rowHTML = () => {
+      const start = currentIndex - (currentIndex % trial.visible_items);
+      const win   = sequence.slice(start, start + trial.visible_items);
+      let sr = "<tr>", ar = "<tr>";
+      win.forEach((si, off) => {
+        const gi = start + off;
+        const cls = gi === currentIndex ? "current" : gi < currentIndex ? "answered" : "";
+        sr += `<td class="${cls}">${SYMBOLS[si]}</td>`;
+        ar += `<td class="${gi < currentIndex ? "answered" : ""}">${
+          responses[gi] ? responses[gi].response : ""}</td>`;
+      });
+      return `<table class="sdmt-row-table">${sr}</tr>${ar}</tr></table>`;
+    };
+
+    const render = () => {
+      display_element.innerHTML = `
+        <div class="pst-header">
+          <div class="pst-logo">Biogen</div>
+          <div class="pst-title">Processing Speed Test</div>
+          <div style="width:60px"></div>
+        </div>
+        <div style="text-align:center;font-weight:bold;margin-top:10px;">KEY</div>
+        ${keyHTML()}
+        ${rowHTML()}
+        <div class="keypad">${[1,2,3,4,5,6,7,8,9].map(d =>
+          `<button class="kp-btn" data-d="${d}">${d}</button>`).join("")}
+        </div>
+        ${trial.show_timer ? '<div class="timer-display" id="sdmt-timer"></div>' : ""}
+      `;
+      display_element.querySelectorAll(".kp-btn").forEach(b =>
+        b.addEventListener("click", onKey));
+    };
+
+    const onKey = (e) => {
+      if (ended) return;
+      const digit  = parseInt(e.currentTarget.dataset.d);
+      const correct = digit === sequence[currentIndex] + 1;
+      responses[currentIndex] = {
+        item_index: currentIndex, symbol: SYMBOLS[sequence[currentIndex]],
+        correct_digit: sequence[currentIndex]+1, response: digit,
+        correct, rt: performance.now() - itemStart
+      };
+      if (correct) correctCount++;
+      totalAnswered++; currentIndex++;
+      itemStart = performance.now();
+      if (trial.max_items && currentIndex >= trial.max_items) { finish(); return; }
+      if (currentIndex >= sequence.length - 5)
+        sequence.push(...generateSequence(50));
+      render();
+    };
+
+    const updateTimer = (rem) => {
+      const el = document.getElementById("sdmt-timer");
+      if (el) el.textContent = `Time remaining: ${Math.max(0, Math.ceil(rem/1000))}s`;
+    };
+
+    const finish = () => {
+      if (ended) return; ended = true;
+      clearInterval(timerIv); clearTimeout(endTO);
+      const rts = responses.filter(r=>r&&r.correct).map(r=>r.rt);
+      const avgRT = rts.length ? rts.reduce((a,b)=>a+b,0)/rts.length : 0;
+      jsPsych.finishTrial({
+        phase: trial.phase_label,
+        total_items_answered: totalAnswered,
+        correct_count: correctCount,
+        accuracy: totalAnswered > 0 ? correctCount / totalAnswered : 0,
+        avg_correct_rt_ms: Math.round(avgRT),
+        total_duration_ms: Math.round(performance.now() - trialStart),
+        responses: responses.filter(Boolean)
+      });
+    };
+
+    render();
+    if (trial.duration_ms) {
+      const end = performance.now() + trial.duration_ms;
+      timerIv = setInterval(() => {
+        const rem = end - performance.now();
+        updateTimer(rem);
+        if (rem <= 0) clearInterval(timerIv);
+      }, 200);
+      endTO = setTimeout(finish, trial.duration_ms);
+    }
+  }
+}
+
+/* =============================================================
+   DEMOGRAPHICS PLUGIN  (generic single-screen custom plugin)
+============================================================= */
+class DemoPlugin {
+  static info = {
+    name: "demo-screen",
+    parameters: {
+      screen_id: { type: "STRING", default: "" }
+    }
+  };
+  constructor(j) { this.jsPsych = j; }
+
+  trial(el, trial) {
+    const j = this.jsPsych;
+    const id = trial.screen_id;
+
+    /* ---- helpers ---- */
+    const months = ["January","February","March","April","May","June",
+                    "July","August","September","October","November","December"];
+    const years  = Array.from({length:120},(_,i)=>2025-i);
+    const days   = Array.from({length:31},(_,i)=>i+1);
+
+    const races = [
+      "American Indian or Alaska Native",
+      "Asian",
+      "Black or African American",
+      "Hispanic or Latino",
+      "Native Hawaiian or Other Pacific Islander",
+      "White",
+      "Two or More Races",
+      "Prefer not to say"
+    ];
+
+    const eduOptions = Array.from({length:21},(_,i)=>i===20?"20+ years":`${i} year${i===1?"":"s"}`);
+
+    /* ---- build screen ---- */
+    if (id === "welcome") {
+      el.innerHTML = `
+        <div class="welcome-wrap">
+          <h1>Processing Speed Test</h1>
+          <p>This assessment measures how quickly you can match symbols to numbers.
+             It takes about <strong>5 minutes</strong> to complete.</p>
+          <p>Before the test, we'll collect some basic information.</p>
+          <button class="next-btn" id="start-btn">Get Started</button>
+        </div>`;
+      document.getElementById("start-btn").onclick = () => j.finishTrial({screen:"welcome"});
+      return;
+    }
+
+    if (id === "name") {
+      el.innerHTML = `
+        <div class="demo-wrap">
+          <h2>What is your full name?</h2>
+          <p>This is used to identify your results.</p>
+          <label for="fname">Full name</label>
+          <input type="text" id="fname" placeholder="First and last name" autocomplete="name">
+          <div class="field-error" id="name-err">Please enter your name.</div>
+          <button class="next-btn" id="next-btn">Next</button>
+        </div>`;
+      document.getElementById("next-btn").onclick = () => {
+        const v = document.getElementById("fname").value.trim();
+        if (!v) { document.getElementById("name-err").style.display="block"; return; }
+        j.finishTrial({screen:"name", full_name: v});
+      };
+      return;
+    }
+
+    if (id === "sex") {
+      const opts = ["Male","Female","Non-binary","Prefer not to say"];
+      el.innerHTML = `
+        <div class="demo-wrap">
+          <h2>What is your sex?</h2>
+          <div class="mc-group" id="sex-group">
+            ${opts.map(o=>`
+              <label class="mc-option">
+                <input type="radio" name="sex" value="${o}"> ${o}
+              </label>`).join("")}
+          </div>
+          <div class="field-error" id="sex-err">Please select an option.</div>
+          <button class="next-btn" id="next-btn">Next</button>
+        </div>`;
+      // style selected
+      el.querySelectorAll('input[name=sex]').forEach(r =>
+        r.addEventListener("change", () => {
+          el.querySelectorAll(".mc-option").forEach(l=>l.classList.remove("selected"));
+          r.closest(".mc-option").classList.add("selected");
+        }));
+      document.getElementById("next-btn").onclick = () => {
+        const v = el.querySelector('input[name=sex]:checked');
+        if (!v) { document.getElementById("sex-err").style.display="block"; return; }
+        j.finishTrial({screen:"sex", sex: v.value});
+      };
+      return;
+    }
+
+    if (id === "dob") {
+      el.innerHTML = `
+        <div class="demo-wrap">
+          <h2>What is your date of birth?</h2>
+          <p>Select your month, day, and year of birth.</p>
+          <div class="scroll-pickers">
+            <select id="dob-month">
+              <option value="">Month</option>
+              ${months.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("")}
+            </select>
+            <select id="dob-day">
+              <option value="">Day</option>
+              ${days.map(d=>`<option value="${d}">${d}</option>`).join("")}
+            </select>
+            <select id="dob-year">
+              <option value="">Year</option>
+              ${years.map(y=>`<option value="${y}">${y}</option>`).join("")}
+            </select>
+          </div>
+          <div class="field-error" id="dob-err">Please complete your date of birth.</div>
+          <button class="next-btn" id="next-btn">Next</button>
+        </div>`;
+      document.getElementById("next-btn").onclick = () => {
+        const m = document.getElementById("dob-month").value;
+        const d = document.getElementById("dob-day").value;
+        const y = document.getElementById("dob-year").value;
+        if (!m||!d||!y) { document.getElementById("dob-err").style.display="block"; return; }
+        j.finishTrial({screen:"dob", dob_month:m, dob_day:d, dob_year:y,
+                       dob_string:`${months[m-1]} ${d}, ${y}`});
+      };
+      return;
+    }
+
+    if (id === "education") {
+      el.innerHTML = `
+        <div class="demo-wrap">
+          <h2>Years of education</h2>
+          <p>How many years of formal education have you completed?</p>
+          <label for="edu">Years of education</label>
+          <select id="edu">
+            <option value="">Select years</option>
+            ${eduOptions.map((o,i)=>`<option value="${i}">${o}</option>`).join("")}
+          </select>
+          <div class="field-error" id="edu-err">Please select your years of education.</div>
+          <button class="next-btn" id="next-btn">Next</button>
+        </div>`;
+      document.getElementById("next-btn").onclick = () => {
+        const v = document.getElementById("edu").value;
+        if (v==="") { document.getElementById("edu-err").style.display="block"; return; }
+        j.finishTrial({screen:"education", education_years: parseInt(v)});
+      };
+      return;
+    }
+
+    if (id === "race") {
+      el.innerHTML = `
+        <div class="demo-wrap">
+          <h2>What is your race / ethnicity?</h2>
+          <label for="race">Select one</label>
+          <select id="race">
+            <option value="">-- Select --</option>
+            ${races.map(r=>`<option value="${r}">${r}</option>`).join("")}
+          </select>
+          <div class="field-error" id="race-err">Please select an option.</div>
+          <button class="next-btn" id="next-btn">Next</button>
+        </div>`;
+      document.getElementById("next-btn").onclick = () => {
+        const v = document.getElementById("race").value;
+        if (!v) { document.getElementById("race-err").style.display="block"; return; }
+        j.finishTrial({screen:"race", race: v});
+      };
+      return;
+    }
+  }
+}
+
+/* =============================================================
+   RESULTS PLUGIN
+============================================================= */
+class ResultsPlugin {
+  static info = { name: "results-screen", parameters: {} };
+  constructor(j) { this.jsPsych = j; }
+
+  trial(el, trial) {
+    const j = this.jsPsych;
+    // pull test-phase data from jsPsych data store
+    const allData  = j.data.get().values();
+    const testData = allData.find(d => d.phase === "test") || {};
+
+    const correct   = testData.correct_count ?? "--";
+    const answered  = testData.total_items_answered ?? "--";
+    const accuracy  = testData.accuracy != null
+                      ? (testData.accuracy * 100).toFixed(1) + "%" : "--";
+    const avgRT     = testData.avg_correct_rt_ms != null
+                      ? (testData.avg_correct_rt_ms / 1000).toFixed(2) + "s" : "--";
+
+    el.innerHTML = `
+      <div class="results-wrap">
+        <h2>Test Complete</h2>
+        <p class="subtitle">Here is a summary of your performance.</p>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">${correct}</div>
+            <div class="stat-label">Correct responses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${answered}</div>
+            <div class="stat-label">Items attempted</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${accuracy}</div>
+            <div class="stat-label">Accuracy</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${avgRT}</div>
+            <div class="stat-label">Avg response time</div>
+          </div>
+        </div>
+        <button class="next-btn" id="done-btn">Finish</button>
+        <p class="done-note">Your results have been saved. You may close this window.</p>
+      </div>`;
+
+    document.getElementById("done-btn").onclick = () =>
+      j.finishTrial({screen: "results"});
+  }
+}
+
+/* =============================================================
+   INITIALIZE + TIMELINE
+============================================================= */
+const jsPsych = initJsPsych({
+  on_finish: () => {
+    fetch("/save", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: jsPsych.data.get().json()
+    }).catch(() => {
+      console.log("No backend — data logged below:");
+      console.log(JSON.parse(jsPsych.data.get().json()));
+    });
+  }
+});
+
+const timeline = [
+
+  // 1. Get Started
+  { type: DemoPlugin, screen_id: "welcome" },
+
+  // 2. Full name
+  { type: DemoPlugin, screen_id: "name" },
+
+  // 3. Sex
+  { type: DemoPlugin, screen_id: "sex" },
+
+  // 4. Date of birth
+  { type: DemoPlugin, screen_id: "dob" },
+
+  // 5. Years of education
+  { type: DemoPlugin, screen_id: "education" },
+
+  // 6. Race
+  { type: DemoPlugin, screen_id: "race" },
+
+  // 7. Tutorial instructions
+  {
+    type: jsPsychInstructions,
+    pages: [
+      `<h2 style="text-align:center">How the test works</h2>
+       <p>At the top of the screen you will see a <strong>KEY</strong> that pairs
+       each symbol with a number from 1 to 9.</p>
+       <p>Below the key you will see a row of symbols with empty boxes beneath them.</p>
+       <p>Your job: look up each symbol in the key and tap the matching number
+       on the keypad.</p>
+       <p>Work from <strong>left to right</strong>, as quickly and accurately as you can.</p>`,
+      `<h2 style="text-align:center">Practice round</h2>
+       <p>You'll now complete a short <strong>practice</strong> with 9 symbols —
+       no time pressure.</p>
+       <p>When you're ready, click <strong>Next</strong>.</p>`
+    ],
+    show_clickable_nav: true
+  },
+
+  // 7b. Practice
+  { type: SdmtPlugin, max_items: 9, duration_ms: null,
+    visible_items: 9, show_timer: false, phase_label: "practice" },
+
+  // 7c. Bridge to real test
+  {
+    type: jsPsychInstructions,
+    pages: [
+      `<h2 style="text-align:center">Ready for the real test?</h2>
+       <p>The test lasts <strong>90 seconds</strong>. Complete as many symbols as
+       possible.</p>
+       <p>Click <strong>Start</strong> when you are ready.</p>`
+    ],
+    show_clickable_nav: true,
+    button_label_next: "Start"
+  },
+
+  // 8. Test
+  { type: SdmtPlugin, duration_ms: 90000, max_items: null,
+    visible_items: 9, show_timer: true, phase_label: "test" },
+
+  // 9. Results
+  { type: ResultsPlugin }
+];
+
+jsPsych.run(timeline);
+</script>
+</html>
